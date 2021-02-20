@@ -9,7 +9,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+<<<<<<< HEAD
     "express": "^4.17.1",
+=======
+>>>>>>> 1670c965c2b627f12a2d60ed5598e51e82c05ab7
     "ws": "^7.4.3"
   }
 }

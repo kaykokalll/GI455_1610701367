@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using WebSocketSharp;
 using UnityEngine.UI;
+<<<<<<< HEAD
 using System;
+=======
+>>>>>>> 1670c965c2b627f12a2d60ed5598e51e82c05ab7
 
 public class Connect : MonoBehaviour
 {
 
+<<<<<<< HEAD
     public struct SocketEvent
     {
         public string eventName;
@@ -136,10 +140,25 @@ public class Connect : MonoBehaviour
         string toJsonStr = JsonUtility.ToJson(socketEvent);      
         ws.Send(toJsonStr);       
         Bleave();     
+=======
+    private WebSocket websocket;
+    public InputField ip;
+    public InputField sendmessage;
+    public Text showmessage;
+    public GameObject conui;
+    public GameObject chatui;
+
+    private void Start()
+    {
+        
+        conui.SetActive(true);
+        chatui.SetActive(false);
+>>>>>>> 1670c965c2b627f12a2d60ed5598e51e82c05ab7
     }
 
     public void Con()
     {
+<<<<<<< HEAD
         ws= new WebSocket("ws://"+ip.text+":30000/");
 
         ws.OnMessage += OnMessage;
@@ -263,4 +282,38 @@ public class Connect : MonoBehaviour
     {
         popupCreate.SetActive(false);
     }
+=======
+        websocket = new WebSocket("ws://"+ip.text+":30000/");
+
+        websocket.OnMessage += OnMessage;
+        
+
+        websocket.Connect();
+
+        conui.SetActive(false);
+        chatui.SetActive(true);
+    }
+
+    
+    public void SendMassage()
+    {
+        
+        websocket.Send(sendmessage.text);         
+    }
+
+    public void OnDestroy()
+    {
+        if (websocket != null)
+        {
+            websocket.Close();
+        }
+        
+    }
+    public void OnMessage(object sender, MessageEventArgs messageEventArgs)
+    {               
+         showmessage.text +="\n"+ messageEventArgs.Data;                     
+    }
+    
+
+>>>>>>> 1670c965c2b627f12a2d60ed5598e51e82c05ab7
 }
