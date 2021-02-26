@@ -1,11 +1,16 @@
-<<<<<<< HEAD
 const app = require('express')();
 const server = require('http').Server(app);
 const websocket = require('ws');
 const wss = new websocket.Server({server});
+const sqlite3 = require('sqlite3').verbose();
+
+let db = new sqlite3.Database('./database/chatDB.db',sqlite3.OPEN_CREATE |sqlite3.OPEN_READWRITE,(err)=>{
+    if(err)throw err;
+    console.log('Connected to datdabase');
+})    
 
 server.listen(process.env.PORT || 30000, ()=>{
-    console.log("Server start at port :"+server.address().port);
+    console.log("Server start at port "+server.address().port);
 });
 
 //var wsList = [];
@@ -35,6 +40,8 @@ wss.on("connection", (ws)=>{
             data:""
         }
         toJsonObj = JSON.parse(data);
+
+       
         //===============================================
 
         if(toJsonObj.eventName == "CreateRoom")//CreateRoom
@@ -123,8 +130,7 @@ wss.on("connection", (ws)=>{
                 }
                 var toJsonStr = JSON.stringify(callbackMsg);
                 ws.send(toJsonStr);
-                //=======================================================
-
+                
                 console.log("client join room success.");
             }
             else
@@ -135,15 +141,10 @@ wss.on("connection", (ws)=>{
                 }
                 var toJsonStr = JSON.stringify(callbackMsg);
                 ws.send(toJsonStr);
-                //=======================================================
-
+                
                 console.log("client Join Room Fail ");
             }
-            
-            //================= Hint =================
-            //roomList[i].wsList.push(ws);
-
-            
+                      
         }
         else if(toJsonObj.eventName == "LeaveRoom")//LeaveRoom
         {
@@ -203,16 +204,93 @@ wss.on("connection", (ws)=>{
                 console.log("leave room fail");
             }
         }
+        else if(toJsonObj.eventName == "Login")
+        {
+            
+            var splitStr = toJsonObj.data.split('#');
+            var userID = splitStr[0];
+            var password = splitStr[1];
+            
+
+            var sqlSelect = "SELECT * FROM UserData WHERE UserID='"+userID+"' AND Password='"+password+"'";
+
+            db.all(sqlSelect,(err,rows)=>{
+                if(err){
+                    console.log("[0]"+err);
+        
+                }
+                else
+                {
+                    if(rows.length >0)
+                    {
+                        console.log("--------1------")
+                        console.log(rows)
+                        console.log("--------1------")
+                        var callbackMsg={
+                            eventName:"Login",
+                            data:rows[0].Name
+                        }
+                        var toJsonStr = JSON.stringify(callbackMsg);                        
+                        ws.send(toJsonStr);
+                    }
+                    else
+                    {
+                        var callbackMsg={
+                            eventName:"Login",
+                            data:"fail"
+                        }
+                        var toJsonStr = JSON.stringify(callbackMsg);                       
+                        ws.send(toJsonStr);
+                    }
+                }
+            })
+        }
+        else if(toJsonObj.eventName == "Register")
+        {
+
+
+            var splitStr = toJsonObj.data.split('#');
+            var userID = splitStr[0];
+            var password = splitStr[1];
+            var rePassword = splitStr[2];
+            var name = splitStr[3];
+           
+
+            var sqlInsert = "INSERT INTO UserData (UserID, Password, Repassword, Name) VALUES ('"+userID+"','"+password+"','"+rePassword+"','"+name+"')";
+
+            db.all(sqlInsert,(err,rows)=>{
+                if(err)
+                {
+                    var callbackMsg={
+                        eventName:"Register",
+                        data:"fail"
+                    }
+                    var toJsonStr = JSON.stringify(callbackMsg);                    
+                    ws.send(toJsonStr);
+                }
+                else
+                {
+                    var callbackMsg={
+                        eventName:"Register",
+                        data:"success"
+                    }
+                    var toJsonStr = JSON.stringify(callbackMsg);                    
+                    ws.send(toJsonStr);
+                }
+            })
+        
+        }
+        
     });
 
 
-    /*wsList.push(ws);
+   /* wsList.push(ws);
     
     ws.on("message", (data)=>{
         console.log("send from client :"+ data);
         Boardcast(data);
-    });
-    */
+    });*/
+    
     ws.on("close", ()=>{
         console.log("client disconnected.");
 
@@ -237,53 +315,28 @@ wss.on("connection", (ws)=>{
     });
 });
 
-function Boardcast(data)
+
+
+function Boardcast(ws,message)
 {
-    /*for(var i = 0; i < wsList.length; i++)
+    var selectRoomIndex = -1;
+    for(var i = 0;i< roomList.length;i++)
     {
-        wsList[i].send(data);
-    }*/
-}
+        if(ws == roomList[i].wsList[j])
+        {
+            selectRoomIndex = i;
+            break;
+        }
+    }
 
-=======
-var websocket = require('ws');
-
-var websocketServer = new websocket.Server({port:30000}, ()=>{
-    console.log("guy server is running");
-});
-
-var wsList = [];
-
-websocketServer.on("connection",(ws, rq)=>{
-    console.log('client connected');
-
-    wsList.push(ws);
-
-    ws.on("message", (data)=>{
-
-        console.log("send from client :"+data);
-        Boardcast(data);
-    });
-
-    ws.on("close",()=>{
-
-        wsList = ArrayRemove(wsList,ws);
-        console.log("client disconnected");
-    });
-});
-
-function ArrayRemove(arr, value)
-{
-    return arr.filter((element)=>{
-        return element != value;
-    });
-}
-
-function Boardcast(data)
-{
-    for(var i =0; i < wsList.length;i++)
+    for(var i =0 ;i<roomList[selectRoomIndex].wsList.length; i++)
     {
-        wsList[i].send(data);
+        var callbackMsg = {
+            eventName:"SendMessage",
+            data : message
+        }
+        roomList[selectRoomIndex].wsList[i].send(JSON.stringify(callbackMsg));
     }
 }
->>>>>>> 1670c965c2b627f12a2d60ed5598e51e82c05ab7
+
+
